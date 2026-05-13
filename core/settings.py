@@ -5,12 +5,19 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = os.environ.get('DJANGO_DEBUG', '0').lower() in ('1', 'true', 'yes')
+_render = os.environ.get('RENDER', '').strip().lower() in ('1', 'true', 'yes')
+_dbg = os.environ.get('DJANGO_DEBUG', '').strip().lower()
+if _dbg in ('1', 'true', 'yes'):
+    DEBUG = True
+elif _dbg in ('0', 'false', 'no'):
+    DEBUG = False
+else:
+    DEBUG = not _render
+
 _raw_secret = os.environ.get('DJANGO_SECRET_KEY', '').strip()
 
 if DEBUG:
@@ -21,10 +28,8 @@ if DEBUG:
 else:
     if not _raw_secret:
         raise ImproperlyConfigured(
-            'DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is off (set it in Render → Environment).'
+            'DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is off (Render: Environment).'
         )
-    # Render Blueprint generateValue is a 256-bit secret (often <50 chars when base64-encoded).
-    # Django recommends longer key material; derive a fixed-width key without storing new secrets.
     SECRET_KEY = (
         _raw_secret
         if len(_raw_secret) >= 50
@@ -53,12 +58,11 @@ def _allowed_hosts() -> list[str]:
 
 ALLOWED_HOSTS = _allowed_hosts()
 
-_sqlite_url = 'sqlite:///' + (BASE_DIR / 'db.sqlite3').as_posix()
 DATABASES = {
-    'default': dj_database_url.config(
-        default=_sqlite_url,
-        conn_max_age=600,
-    ),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
 }
 
 INSTALLED_APPS = [
@@ -116,6 +120,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
@@ -151,7 +156,6 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if not DEBUG:
-    # Render terminates TLS at the edge; do not enable Django-level HTTP→HTTPS redirect here.
     SECURE_SSL_REDIRECT = False
     _hsts = int(os.environ.get('SECURE_HSTS_SECONDS', '2592000'))
     if _hsts > 0:
@@ -170,7 +174,6 @@ if not DEBUG:
         _csrf_origins.extend(p.strip() for p in _extra_csrf.split(',') if p.strip())
     CSRF_TRUSTED_ORIGINS = _csrf_origins
 
-    # Expected on Render: TLS terminates at the edge; internal dyno traffic is HTTP.
     SILENCED_SYSTEM_CHECKS = [
         'security.W008',
         'security.W021',

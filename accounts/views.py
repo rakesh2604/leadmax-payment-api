@@ -21,7 +21,12 @@ class BankAccountListCreateView(APIView):
         existing_count = BankAccount.objects.filter(user=request.user).count()
         if existing_count >= MAX_ACCOUNTS_PER_USER:
             return Response(
-                {'error': f'You can only have a maximum of {MAX_ACCOUNTS_PER_USER} bank accounts.'},
+                {
+                    'detail': (
+                        f'Account limit reached ({MAX_ACCOUNTS_PER_USER} accounts per user). '
+                        'Close or remove an account before adding another.'
+                    ),
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -44,9 +49,12 @@ class BankAccountDetailView(APIView):
     def delete(self, request, pk):
         account = self.get_object(pk, request.user)
         if not account:
-            return Response({'error': 'Account not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'detail': 'No bank account found for this id on your profile.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         account.delete()
-        return Response({'message': 'Account deleted successfully.'}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TopUpView(APIView):
@@ -56,7 +64,10 @@ class TopUpView(APIView):
         try:
             account = BankAccount.objects.get(pk=pk, user=request.user)
         except BankAccount.DoesNotExist:
-            return Response({'error': 'Account not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'detail': 'No bank account found for this id on your profile.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = TopUpSerializer(data=request.data)
         if not serializer.is_valid():
@@ -65,6 +76,9 @@ class TopUpView(APIView):
         account.balance += serializer.validated_data['amount']
         account.save()
         return Response(
-            {'message': 'Top-up successful.', 'new_balance': str(account.balance)},
+            {
+                'detail': 'Top-up completed.',
+                'new_balance': str(account.balance),
+            },
             status=status.HTTP_200_OK,
         )

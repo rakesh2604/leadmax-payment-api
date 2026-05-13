@@ -3,7 +3,8 @@ from django.urls import path, include
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from .auth_views import LoginView, RefreshView
 
 
 @api_view(['GET'])
@@ -25,8 +26,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/users/', include('users.urls')),
-    path('api/auth/login/', TokenObtainPairView.as_view(), name='token-obtain'),
-    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+    path('api/auth/login/', LoginView.as_view(), name='token-obtain'),
+    path('api/auth/refresh/', RefreshView.as_view(), name='token-refresh'),
     path('api/accounts/', include('accounts.urls')),
     path('api/payments/', include('payments.urls')),
 ]

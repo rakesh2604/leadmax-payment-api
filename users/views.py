@@ -38,17 +38,20 @@ class UserDetailView(APIView):
     def get(self, request, pk):
         user = self.get_object(pk)
         if not user:
-            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'No user matches the given id.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
     def put(self, request, pk):
         user = self.get_object(pk)
         if not user:
-            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'No user matches the given id.'}, status=status.HTTP_404_NOT_FOUND)
 
         if user != request.user:
-            return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {'detail': 'You may only update your own profile.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -59,10 +62,13 @@ class UserDetailView(APIView):
     def delete(self, request, pk):
         user = self.get_object(pk)
         if not user:
-            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'No user matches the given id.'}, status=status.HTTP_404_NOT_FOUND)
 
         if user != request.user:
-            return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {'detail': 'You may only delete your own account.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         user.delete()
-        return Response({'message': 'User deleted successfully.'}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
