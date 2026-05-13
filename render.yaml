@@ -3,7 +3,7 @@ services:
     name: leadmax-payment
     runtime: python
     buildCommand: pip install -r requirements.txt && python3 manage.py migrate --no-input && python3 manage.py collectstatic --no-input
-    startCommand: python -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.14.3
