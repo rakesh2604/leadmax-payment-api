@@ -3,3 +3,4 @@
 *.py text eol=lf
 .python-version text eol=lf
 render.yaml text eol=lf
+requirements.txt text eol=lf
