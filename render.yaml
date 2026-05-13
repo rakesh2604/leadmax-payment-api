@@ -1,12 +1,19 @@
-# Blueprint: build/start below. If the service was created in the UI only, set the same
-# Build command:  bash build.sh
-# Start command:  bash render_start.sh
+# Blueprint (IaC). Sync this service from the repo Blueprint, or paste these in the UI:
+#   Build:  bash build.sh
+#   Start:  bash render_start.sh
 services:
   - type: web
     name: leadmax-payment
     runtime: python
     buildCommand: bash build.sh
     startCommand: bash render_start.sh
+    healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
-        value: 3.14.3
+        value: 3.12.8
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: PIP_NO_CACHE_DIR
+        value: "1"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true

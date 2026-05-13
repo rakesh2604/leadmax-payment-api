@@ -9,13 +9,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def api_root(request):
+    base = request.build_absolute_uri('/').rstrip('/')
     return Response({
-        'users':    'http://127.0.0.1:8000/api/users/',
-        'login':    'http://127.0.0.1:8000/api/auth/login/',
-        'refresh':  'http://127.0.0.1:8000/api/auth/refresh/',
-        'accounts': 'http://127.0.0.1:8000/api/accounts/',
-        'payments': 'http://127.0.0.1:8000/api/payments/',
-        'history':  'http://127.0.0.1:8000/api/payments/history/',
+        'users': f'{base}/api/users/',
+        'login': f'{base}/api/auth/login/',
+        'refresh': f'{base}/api/auth/refresh/',
+        'accounts': f'{base}/api/accounts/',
+        'payments': f'{base}/api/payments/',
+        'history': f'{base}/api/payments/history/',
     })
 
 
