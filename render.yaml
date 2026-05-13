@@ -2,7 +2,7 @@ services:
   - type: web
     name: leadmax-payment
     runtime: python
-    buildCommand: pip install -r requirements.txt && python3 manage.py migrate --no-input && python3 manage.py collectstatic --no-input
+    buildCommand: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt && python3 manage.py migrate --no-input && python3 manage.py collectstatic --no-input
     startCommand: python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
