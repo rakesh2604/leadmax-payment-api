@@ -1,5 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
+
 from .models import BankAccount
 
 
@@ -7,7 +8,13 @@ class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
         fields = ['id', 'account_name', 'balance', 'created_at']
-        read_only_fields = ['id', 'balance', 'created_at']
+        read_only_fields = ['id', 'created_at']
+        extra_kwargs = {
+            'balance': {
+                'required': False,
+                'min_value': Decimal('0'),
+            },
+        }
 
 
 class TopUpSerializer(serializers.Serializer):
