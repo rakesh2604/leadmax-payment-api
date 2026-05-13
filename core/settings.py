@@ -48,10 +48,11 @@ def _allowed_hosts() -> list[str]:
     extra = os.environ.get('ALLOWED_HOSTS', '')
     if extra.strip():
         hosts.extend(part.strip() for part in extra.split(',') if part.strip())
+    if not hosts and _render:
+        hosts = ['.onrender.com']
     if not hosts:
         raise ImproperlyConfigured(
-            'Non-debug mode requires RENDER_EXTERNAL_HOSTNAME (set automatically on Render web '
-            'services) or ALLOWED_HOSTS.'
+            'Non-debug mode requires RENDER_EXTERNAL_HOSTNAME, ALLOWED_HOSTS, or Render runtime (RENDER=true).'
         )
     return hosts
 
