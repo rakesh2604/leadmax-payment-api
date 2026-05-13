@@ -1,9 +1,12 @@
+# Blueprint: build/start below. If the service was created in the UI only, set the same
+# Build command:  bash build.sh
+# Start command:  bash render_start.sh
 services:
   - type: web
     name: leadmax-payment
     runtime: python
-    buildCommand: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt && python3 manage.py migrate --no-input && python3 manage.py collectstatic --no-input
-    startCommand: python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+    buildCommand: bash build.sh
+    startCommand: bash render_start.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.14.3
