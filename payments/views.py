@@ -24,50 +24,42 @@ class PaymentView(APIView):
         amount = data['amount']
 
         try:
-            sender = BankAccount.objects.get(pk=sender_id, user=request.user)
-        except BankAccount.DoesNotExist:
-            return Response(
-                {'detail': 'Sender account was not found or is not linked to your user.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        try:
-            receiver = BankAccount.objects.get(pk=receiver_id)
-        except BankAccount.DoesNotExist:
-            return Response(
-                {'detail': 'Receiver account was not found.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        if sender.balance < amount:
             with db_transaction.atomic():
+                sender = BankAccount.objects.select_for_update().get(pk=sender_id, user=request.user)
+                receiver = BankAccount.objects.select_for_update().get(pk=receiver_id)
+
+                if sender.balance < amount:
+                    txn = Transaction.objects.create(
+                        sender_account=sender,
+                        receiver_account=receiver,
+                        amount=amount,
+                        status=Transaction.STATUS_FAILED,
+                    )
+                    return Response(
+                        {
+                            'detail': 'Insufficient balance for this transfer.',
+                            'transaction_id': txn.id,
+                            'status': Transaction.STATUS_FAILED,
+                            'available_balance': str(sender.balance),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                sender.balance -= amount
+                receiver.balance += amount
+                sender.save(update_fields=['balance'])
+                receiver.save(update_fields=['balance'])
+
                 txn = Transaction.objects.create(
                     sender_account=sender,
                     receiver_account=receiver,
                     amount=amount,
-                    status=Transaction.STATUS_FAILED,
+                    status=Transaction.STATUS_SUCCESS,
                 )
+        except BankAccount.DoesNotExist:
             return Response(
-                {
-                    'detail': 'Insufficient balance for this transfer.',
-                    'transaction_id': txn.id,
-                    'status': Transaction.STATUS_FAILED,
-                    'available_balance': str(sender.balance),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        with db_transaction.atomic():
-            sender.balance -= amount
-            sender.save()
-            receiver.balance += amount
-            receiver.save()
-
-            txn = Transaction.objects.create(
-                sender_account=sender,
-                receiver_account=receiver,
-                amount=amount,
-                status=Transaction.STATUS_SUCCESS,
+                {'detail': 'Sender or receiver account was not found, or the sender is not yours.'},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         return Response(

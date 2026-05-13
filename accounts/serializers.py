@@ -7,7 +7,7 @@ from .models import BankAccount
 class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = ['id', 'account_name', 'balance', 'created_at']
+        fields = ['id', 'bank_name', 'account_name', 'account_number', 'balance', 'created_at']
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
             'balance': {

@@ -39,6 +39,11 @@ class UserDetailView(APIView):
         user = self.get_object(pk)
         if not user:
             return Response({'detail': 'No user matches the given id.'}, status=status.HTTP_404_NOT_FOUND)
+        if user.pk != request.user.pk:
+            return Response(
+                {'detail': 'You can only view your own profile.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
